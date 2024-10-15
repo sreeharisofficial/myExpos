@@ -1,0 +1,55 @@
+breakpoint;
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=-1;
+[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13]=SP;
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+11]*512-1;
+backup;
+
+multipush(EIP);
+if((EC!=0)||([PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13]==(PTLR*512-1))) then
+	print("Exception occured!Exc no:");
+	print(EC);
+	R1=3;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	call PROCESS_MANAGER;
+	call SCHEDULER;
+endif;
+alias PID R4;
+PID=[SYSTEM_STATUS_TABLE+1];
+alias blockNo R2;
+blockNo=[DISK_MAP_TABLE+PID*10+EPN];
+if((EPN>=4)&&(EPN<=7)) then
+	multipush(R2,R4);
+	R1=5;
+	PID=[SYSTEM_STATUS_TABLE+1];
+	blockNo=[DISK_MAP_TABLE+PID*10+EPN];
+		
+	call MEMORY_MANAGER;
+	breakpoint;
+	multipop(R2,R4);
+	[PTBR+EPN*2]=R0;
+	[PTBR+2*EPN+1]="0100";
+endif;
+if((EPN>=2)&&(EPN<=3)) then
+		multipush(R2,R4);
+		R1=1;
+		call MEMORY_MANAGER;
+		[PTBR+4]=R0;
+		[PTBR+5]="1110";
+		R1=1;
+		call MEMORY_MANAGER;
+		[PTBR+6]=R0;
+		[PTBR+7]="1110";
+		multipop(R2,R4);
+endif;	
+
+
+
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+multipop(EIP);
+restore;
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
+SP=SP+1;
+[[PTBR+2*(SP/512)]*512+(SP%512)]=EIP;
+
+breakpoint;
+ireturn;

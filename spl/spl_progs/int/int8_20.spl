@@ -1,0 +1,126 @@
+breakpoint;
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=8;
+alias userSp R0;
+userSp=SP;
+
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13]=SP;
+SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+11]*512-1;
+
+
+alias pid_c R2;
+alias retAddr R3;
+
+multipush(R0);
+R1=1;
+
+
+retAddr=[PTBR+((userSp-1)/512)*2]*512+(userSp-1)%512;
+
+call MOD_1;
+
+pid_c=R0;
+multipop(R0);
+
+if(pid_c==-1)then
+	[retAddr]=-1;
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+	SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13];
+	ireturn;
+endif;
+
+if([PTBR+4]==-1)then
+	
+	multipush(R0,R1,R2,R3);
+	R1=1;
+	call MOD_2;
+	[PTBR+4]=R0;
+	[PTBR+5]="0110";
+	call MOD_2;
+	[PTBR+6]=R0;
+	[PTBR+7]="0110";
+	multipop(R0,R1,R2,R3);
+endif;
+
+
+alias cptbr R4;
+cptbr = [PROCESS_TABLE+pid_c*16+14];
+
+multipush(R0,R1,R2,R3);
+R1=1;
+call MOD_2;
+[cptbr+16]=R0;
+[cptbr+17]="0110";
+call MOD_2;
+[cptbr+18]=R0;
+[cptbr+19]="0110";
+
+call MOD_2;
+[PROCESS_TABLE+pid_c*16+11]=R0;
+multipop(R0,R1,R2,R3);
+
+[PROCESS_TABLE+pid_c*16+3]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+3];
+[PROCESS_TABLE+pid_c*16+6]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+6];
+[PROCESS_TABLE+pid_c*16+7]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+7];
+[PROCESS_TABLE+pid_c*16+10]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+10];
+[PROCESS_TABLE+pid_c*16+13]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13];
+
+[PROCESS_TABLE+pid_c*16+0]=0;
+[PROCESS_TABLE+pid_c*16+9]=0;
+[PROCESS_TABLE+pid_c*16+12]=0;
+[PROCESS_TABLE+pid_c*16+4]=CREATED;
+[PROCESS_TABLE+pid_c*16+2]=[SYSTEM_STATUS_TABLE+1];
+
+alias i R5;
+i=1;
+while(i<16)do     //file
+	[([PROCESS_TABLE+pid_c*16+11]+1)*512-i]=[([PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+11]+1)*512-i];
+	i=i+1;
+endwhile;
+
+i=0;
+
+while(i<10)do   //dmt
+	[DISK_MAP_TABLE+pid_c*10+i]=[DISK_MAP_TABLE+[SYSTEM_STATUS_TABLE+1]*10+i];
+	i=i+1;
+endwhile;
+
+i=0;
+while(i<8)do    //pagetable
+	[cptbr+2*i]=[PTBR+2*i];
+	[cptbr+2*i+1]=[PTBR+2*i+1];
+	
+	if([PTBR+2*i]>0)then
+		[MEMORY_FREE_LIST+[PTBR+2*i]]=[MEMORY_FREE_LIST+[PTBR+2*i]]+1;
+		
+	endif;
+	i=i+1;
+endwhile;
+
+i=0;
+
+while(i<512)do     //stack
+	[[cptbr+16]*512+i]=[[PTBR+16]*512+i];
+	[[cptbr+18]*512+i]=[[PTBR+18]*512+i];
+	i=i+1;
+endwhile;
+
+
+
+[[PROCESS_TABLE+pid_c*16+11]*512]=BP;
+[retAddr]=pid_c;
+breakpoint;
+retAddr=[cptbr+((userSp-1)/512)*2]*512+(userSp-1)%512;
+[retAddr]=0;
+
+
+SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13];
+
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+breakpoint;
+ireturn;
+	
+
+
+
+	
+

@@ -1,0 +1,99 @@
+alias userSp R0;
+userSp=SP;
+
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512-1;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9]=9;
+
+alias name R1;
+name = [[PTBR + ((userSp-4)/512)*2]*512 + (userSp-4)%512];
+
+alias counter R2;
+counter=1;
+while(counter<60)do
+	if([INODE_TABLE + counter*16]==3 && [INODE_TABLE + counter*16 + 1]==name)then
+		break;
+	endif;
+	counter=counter+1;
+endwhile;
+
+alias retAddr R3;
+retAddr = [PTBR+((userSp-1)/512)*2]*512 + (userSp-1)%512;
+
+if(counter==60)then
+	[retAddr]=-1;
+	SP=userSp;
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+	ireturn;
+endif;
+
+multipush(R0,R1,R2,R3);
+R1=3;
+R2=[SYSTEM_STATUS_TABLE+1];
+
+call MOD_1;
+
+multipop(R0,R1,R2,R3);
+
+[MEMORY_FREE_LIST + [PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+11]]=[MEMORY_FREE_LIST + [PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+11]]+1;
+
+[SYSTEM_STATUS_TABLE + 2]=[SYSTEM_STATUS_TABLE + 2]-1;
+
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512-1;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 1]=[SYSTEM_STATUS_TABLE+1];
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 4]=RUNNING;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 7]=counter;
+
+PTBR=[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 14];
+
+[PTBR+0]=63;
+[PTBR+1]="0100";
+[PTBR+2]=64;
+[PTBR+3]="0100";
+
+multipush(R0,R1,R2,R3);
+R1=1;
+
+call MOD_2;
+
+
+[PTBR+4]=R0;
+[PTBR+5]="0110";
+
+R1=1;
+
+call MOD_2;
+
+
+[PTBR+6]=R0;
+[PTBR+7]="0110";
+
+R1=1;
+
+call MOD_2;
+
+[PTBR+16]=R0;
+[PTBR+17]="0110";
+
+R1=1;
+
+call MOD_2;
+
+[PTBR+18]=R0;
+[PTBR+19]="0110";
+
+multipop(R0,R1,R2,R3);
+
+loadi(65,7);
+loadi(66,8);
+[PTBR+8]=65;
+[PTBR+9]="0100";
+[PTBR+10]=66;
+[PTBR+11]="0100";
+print [65*512+1];
+[[PTBR+16]*512]=[[PTBR+8]*512+1];
+SP=userSp;
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+ireturn;
+	 

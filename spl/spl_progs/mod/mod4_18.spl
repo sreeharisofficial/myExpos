@@ -1,0 +1,60 @@
+alias functionNum R1;
+alias arg1 R2;
+alias arg2 R3;
+
+if(functionNum==2)then
+	multipush(R1,R2,R3);
+	R1=3;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	call MOD_0;
+	multipop(R1,R2,R3);
+	
+	[DISK_STATUS_TABLE+1]=0;
+	[DISK_STATUS_TABLE+2]=arg1;
+	[DISK_STATUS_TABLE+3]=arg2;
+	load(arg1,arg2);
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16 + 4]=WAIT_DISK;
+	breakpoint;
+	multipush(R1,R2,R3);
+	call MOD_5;
+	multipop(R1,R2,R3);
+	return;
+endif;
+		
+
+if(functionNum==3)then
+	backup;
+	R1=8;
+	R2=arg1;
+	call MOD_0;
+	restore;
+	
+	print arg2;
+
+	backup;
+	R1=9;
+	R2=arg1;
+	call MOD_0;
+	restore;
+	return;
+endif;
+
+if(functionNum==4)then
+	backup;
+	R1=8;
+	R2=arg1;
+	call MOD_0;
+	restore;
+	breakpoint;
+	read;
+
+	[PROCESS_TABLE + arg1*16 + 4] = WAIT_TERMINAL;
+	backup;
+	call MOD_5;
+	restore;
+	[[PTBR+(arg2/512)*2]*512+arg2%512] = [PROCESS_TABLE + arg1*16 + 8];
+	return;
+endif;
+
+
+	

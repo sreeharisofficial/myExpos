@@ -1,0 +1,67 @@
+alias userSp R0;
+userSp=SP;
+
+alias syscall R1;
+syscall=[[PTBR+((userSp-5)/512)*2]*512+(userSp-5)%512];
+
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13]=SP;
+SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+11]*512-1;
+
+
+alias returnVal R4;
+returnVal=[PTBR+((userSp-1)/512)*2]*512+(userSp-1)%512;
+
+if(syscall==11)then
+	[returnVal]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+1];
+	SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13];
+	ireturn;
+endif;
+
+if(syscall==12)then
+	[returnVal]=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+2];
+	SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13];
+	ireturn;
+endif;
+
+
+if(syscall==13)then
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=13;
+	alias pid R2;
+	pid=[[PTBR+((userSp-4)/512)*2]*512+(userSp-4)%512];
+
+	if(pid<0 || pid>15 || [PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+4]==TERMINATED || pid==[SYSTEM_STATUS_TABLE+1])then
+		[returnVal]=-1;
+		[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+		SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13];
+		ireturn;
+	endif;
+	
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+4]=WAIT_PROCESS;
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+5]=pid;
+	multipush(R0,R1,R2,R4);
+	call MOD_5;
+	multipop(R0,R1,R2,R4);
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+	[returnVal]=0;
+	SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13];
+	ireturn;
+endif;
+
+if(syscall==14)then
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=14;
+	alias i R3;
+	i=1;
+	while(i<16)do
+		if([PROCESS_TABLE+i*16+4]==WAIT_PROCESS && [PROCESS_TABLE+i*16+5]==[SYSTEM_STATUS_TABLE+1])then
+			[PROCESS_TABLE+i*16+4]=READY;
+		endif;
+		i=i+1;
+	endwhile;
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+	[returnVal]=0;
+endif;
+
+
+
+SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13];
+ireturn;

@@ -1,0 +1,36 @@
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=7;
+
+alias userSP R0;
+userSP=SP;
+
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+13]=SP;
+SP=[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+11]*512-1;
+
+alias fileDescriptor R1;
+fileDescriptor=[[PTBR + ((userSP-4)/512)*2]*512+(userSP-4)%512];
+
+if(fileDescriptor!=-1)then
+	alias returnAddr R2;
+	returnAddr = ([PTBR + ((userSP-1)/512)*2]*512+(userSP-1)%512);
+	[returnAddr]=-1;
+	
+else
+	alias wordAddr R3;
+	wordAddr = [[PTBR + ((userSP-3)/512)*2]*512+(userSP-3)%512];
+	backup;
+	R1=4;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	R3=wordAddr;
+	
+	call MOD_4;
+	
+	restore;
+	
+	alias returnAddr R4;
+	returnAddr = ([PTBR + ((userSP-1)/512)*2]*512+(userSP-1)%512);
+	[returnAddr]=0;
+endif;
+
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+SP=userSP;
+ireturn;

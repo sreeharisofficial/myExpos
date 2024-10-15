@@ -1,0 +1,96 @@
+alias functionNum R1;
+
+
+if(functionNum==1)then
+	[SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]+1;
+	while([SYSTEM_STATUS_TABLE + 2]==0)do
+		[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+4]=WAIT_MEM;
+		call MOD_5;
+	endwhile;
+	[SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]-1;
+	[SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]-1;
+	alias free R0;
+	free=76;
+	while(free<128)do
+		if([MEMORY_FREE_LIST+free]==0)then
+			[MEMORY_FREE_LIST+free]=1;
+			return;
+		endif;
+		free=free+1;
+	endwhile;
+	return;
+endif;
+
+if(functionNum==2)then
+	alias  page R2;
+	[MEMORY_FREE_LIST+R2]=[MEMORY_FREE_LIST+R2]-1;
+	if([MEMORY_FREE_LIST+R2]==0)then
+		[SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]+1;
+	endif;
+	alias i R3;
+	i=1;
+	while(i<16)do
+		if([PROCESS_TABLE+i*16+4]==WAIT_MEM)then
+			[PROCESS_TABLE+i*16+4]=READY;
+		endif;
+		i=i+1;
+	endwhile;
+	return;
+endif;
+
+if(functionNum==4)then
+	alias block R2;
+	[DISK_FREE_LIST+block]=[DISK_FREE_LIST+block]-1;
+	return;
+endif;
+
+if(functionNum==5)then
+	alias  page R2;
+	alias i R3;
+	i=1;
+	while(i<16)do
+		if([DISK_MAP_TABLE+i*10+4]==page)then
+			if([[PROCESS_TABLE+i*16+14]+9]=="0100")then
+			R0=[[PROCESS_TABLE+i*16+14]+8]; 		
+			[MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+			return;
+			endif;
+		endif;
+		if([DISK_MAP_TABLE+i*10+5]==page)then
+			if([[PROCESS_TABLE+i*16+14]+11]=="0100")then
+			R0=[[PROCESS_TABLE+i*16+14]+10]; 		
+			[MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+			return;
+			endif;
+		endif;
+		if([DISK_MAP_TABLE+i*10+6]==page)then
+			if([[PROCESS_TABLE+i*16+14]+13]=="0100")then
+			R0=[[PROCESS_TABLE+i*16+14]+12]; 		
+			[MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+			return;
+			endif;
+		endif;
+		if([DISK_MAP_TABLE+i*10+7]==page)then
+			if([[PROCESS_TABLE+i*16+14]+15]=="0100")then
+			R0=[[PROCESS_TABLE+i*16+14]+14]; 		
+			[MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+			return;
+			endif;
+		endif;
+		i=i+1;
+	endwhile;
+	
+	multipush(R1,R2);
+	R1=1;
+	call MOD_2;
+	R1=2;
+	R3=page;
+	R2=R0;
+	
+	multipush(R0);
+	call MOD_4;
+	multipop(R0);
+	multipop(R1,R2);
+	return;
+endif;
+	
