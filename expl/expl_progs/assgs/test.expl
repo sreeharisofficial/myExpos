@@ -1,0 +1,18 @@
+
+int main(){
+decl
+	int a,b,c,d,e;
+enddecl
+begin
+	breakpoint;
+	a=exposcall("Fork");
+	b=exposcall("Fork");
+	c=exposcall("Fork");
+	d=exposcall("Fork");
+
+	breakpoint;
+	e=exposcall("Getpid");
+	write(e);
+	return 0;
+end
+}

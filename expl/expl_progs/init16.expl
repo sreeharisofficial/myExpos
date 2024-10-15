@@ -1,0 +1,24 @@
+decl
+	int a,b,gcd,temp;
+enddecl
+int main(){
+begin
+	read(a);
+	read(b);
+	if(a<b)then
+		temp=a;
+		a=b;
+		b=temp;
+	endif;
+	
+	while(b!=0)do
+		temp=b;
+		b=a%b;
+		a=temp;
+	endwhile;
+	write(a);
+		
+	return 0;
+end
+}
+	

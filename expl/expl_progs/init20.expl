@@ -1,0 +1,17 @@
+int main(){
+decl
+	int t,f;
+enddecl
+begin
+	write("Start");
+	t=exposcall("Fork");
+	if(t>0)then
+		f=exposcall("Wait");
+	else
+		f=exposcall("Exec","odd20.xsm");
+	endif;
+	write("End");
+	breakpoint;
+	return 0;
+end
+}

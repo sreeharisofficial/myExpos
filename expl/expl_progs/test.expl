@@ -1,0 +1,16 @@
+int main(){
+decl
+	int a,b,c,d,e,f,g,h,i;
+enddecl
+begin
+	breakpoint;
+	a=exposcall("Fork");
+	breakpoint;
+	b=exposcall("Fork");
+breakpoint;
+	c=exposcall("Fork");
+breakpoint;
+	d=exposcall("Exec","pid.xsm");
+	return 0;
+end
+}

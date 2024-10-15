@@ -1,0 +1,14 @@
+int main(){
+decl
+	str i;
+	int t;
+enddecl
+begin
+	breakpoint;
+	read(i);
+	breakpoint;
+	t=exposcall("Exec",i);
+	write("kannan");
+	return 0;
+end
+}

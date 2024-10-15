@@ -1,0 +1,36 @@
+decl
+	int isPrime(int n);
+enddecl
+
+int isPrime(int n){
+decl 
+	int i,r;
+enddecl
+begin
+	i=2;r=1;
+	while(i<n)do
+		if((n%i)==0)then
+			r=0;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+	return r;
+end
+}
+
+int main(){
+decl
+	int i;
+enddecl
+begin
+	i=1;
+	while(i<=100)do
+		if(isPrime(i)==1)then
+			write(i);
+		endif;
+		i=i+1;
+	endwhile;
+	return 0;
+end
+}
